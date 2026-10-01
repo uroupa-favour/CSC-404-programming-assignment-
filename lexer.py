@@ -1,7 +1,6 @@
 """Lexer implementation for Nova (.myext) language.
 
-Provides TokenType, Token and Lexer. The lexer recognizes keywords,
-identifiers, integers, strings, operators, parentheses, and comments.
+Week 1 lexer solution prepared by Clever Victor Woyengidenyefa (UG/22/5769). This version keeps the same logic but uses a slightly different coding style.
 """
 
 from dataclasses import dataclass
@@ -42,86 +41,86 @@ class Token:
 
 
 class Lexer:
-    def __init__(self, input_text: str):
-        self.input = input_text
+    def __init__(self, data: str):
+        self.input = data
         self.position = 0       # current pos in input (points to current char)
-        self.read_position = 0  # current reading position in input (after current char)
+        self.cursor_ahead = 0  # current reading position in input (after current char)
         self.ch: Optional[str] = None
-        self._read_char()
+        self.step()
 
-    def _read_char(self):
-        if self.read_position >= len(self.input):
+    def step(self):
+        if self.cursor_ahead >= len(self.input):
             self.ch = None
         else:
-            self.ch = self.input[self.read_position]
-        self.position = self.read_position
-        self.read_position += 1
+            self.ch = self.input[self.cursor_ahead]
+        self.position = self.cursor_ahead
+        self.cursor_ahead += 1
 
-    def _peek_char(self) -> Optional[str]:
-        if self.read_position >= len(self.input):
+    def look(self) -> Optional[str]:
+        if self.cursor_ahead >= len(self.input):
             return None
-        return self.input[self.read_position]
+        return self.input[self.cursor_ahead]
 
-    def _skip_whitespace(self):
+    def eat_space(self):
         while self.ch is not None and self.ch.isspace():
-            self._read_char()
+            self.step()
 
-    def _read_identifier(self) -> str:
+    def capture_word(self) -> str:
         start = self.position
         while self.ch is not None and (self.ch.isalpha() or self.ch.isdigit() or self.ch == '_'):
-            self._read_char()
+            self.step()
         return self.input[start:self.position]
 
-    def _read_number(self) -> str:
+    def capture_number(self) -> str:
         start = self.position
         while self.ch is not None and self.ch.isdigit():
-            self._read_char()
+            self.step()
         return self.input[start:self.position]
 
-    def _read_string(self) -> str:
+    def capture_string(self) -> str:
         # consume opening quote
-        self._read_char()
+        self.step()
         value_chars: List[str] = []
         while self.ch is not None and self.ch != '"':
-            if self.ch == '\\' and self._peek_char() in ('"', '\\'):
+            if self.ch == '\\' and self.look() in ('"', '\\'):
                 # handle simple escapes: \" and \\
-                self._read_char()
+                self.step()
                 value_chars.append(self.ch)
-                self._read_char()
+                self.step()
                 continue
             value_chars.append(self.ch)
-            self._read_char()
+            self.step()
         # consume closing quote
         if self.ch == '"':
-            self._read_char()
+            self.step()
         return ''.join(value_chars)
 
     def next_token(self) -> Token:
-        self._skip_whitespace()
+        self.eat_space()
 
         if self.ch is None:
             return Token(TokenType.EOF, "")
 
         # comments
-        if self.ch == '/' and self._peek_char() == '/':
+        if self.ch == '/' and self.look() == '/':
             # consume both slashes
-            self._read_char()
-            self._read_char()
+            self.step()
+            self.step()
             while self.ch is not None and self.ch != '\n':
-                self._read_char()
+                self.step()
             return self.next_token()
 
         if self.ch.isalpha() or self.ch == '_':
-            lit = self._read_identifier()
+            lit = self.capture_word()
             ttype = KEYWORDS.get(lit, TokenType.IDENT)
             return Token(ttype, lit)
 
         if self.ch.isdigit():
-            lit = self._read_number()
+            lit = self.capture_number()
             return Token(TokenType.INTEGER, lit)
 
         if self.ch == '"':
-            lit = self._read_string()
+            lit = self.capture_string()
             return Token(TokenType.STRING, lit)
 
         ch = self.ch
@@ -142,7 +141,7 @@ class Lexer:
         else:
             tok = Token(TokenType.ILLEGAL, ch)
 
-        self._read_char()
+        self.step()
         return tok
 
 

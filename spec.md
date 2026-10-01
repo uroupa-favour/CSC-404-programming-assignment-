@@ -77,3 +77,6 @@ Notes
 -----
 - Operator precedence: `*` and `/` bind tighter than `+` and `-`.
 - Comments begin with `//` and continue to end of line.
+
+
+Student submission: Clever Victor Woyengidenyefa (UG/22/5769)
